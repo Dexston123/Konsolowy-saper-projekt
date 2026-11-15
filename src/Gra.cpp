@@ -123,14 +123,39 @@ void Gra::oGrze() const {
     pauza();
 }
 
+void Gra::pokazTryb(const TrybGry& tryb) const {
+    naglowek(tryb.nazwa());
+    std::cout << "  " << tryb.opis() << '\n';
+    pauza();
+}
+
+void Gra::menuGraj() {
+    while (std::cin) {
+        naglowek("WYBIERZ TRYB");
+        std::cout << "  [1] Klasyczny    - jedna gra na punkty\n"
+                     "  [2] Nieskonczony - kolejne plansze do przegranej\n"
+                     "  [0] Powrot\n";
+        int opcja = wybor(0, 2);
+        if (opcja <= 0) return;
+        if (opcja == 1) {
+            TrybKlasyczny tryb;
+            pokazTryb(tryb);
+        } else {
+            TrybNieskonczony tryb;
+            pokazTryb(tryb);
+        }
+    }
+}
+
 int Gra::uruchom() {
     ladowanie();
     bool dziala = true;
     while (dziala && std::cin) {
         naglowek("MENU GLOWNE");
-        std::cout << "  [1] O grze\n\n  [2] Wyjdz\n";
-        int opcja = wybor(1, 2);
-        if (opcja == 1) oGrze();
+        std::cout << "  [1] Tryby gry\n\n  [2] O grze\n\n  [3] Wyjdz\n";
+        int opcja = wybor(1, 3);
+        if (opcja == 1) menuGraj();
+        else if (opcja == 2) oGrze();
         else dziala = false;
     }
     std::cout << "\n  Do zobaczenia!\n";

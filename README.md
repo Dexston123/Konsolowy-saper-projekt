@@ -1,14 +1,15 @@
-# Saper - etap 1
+# Saper - etap 2
 
-Menu, opis zasad Sapera, walidacja wpisywanego numeru i sztuczne ladowanie.
-Ladowanie trwa okolo 7 sekund; napis SAPER miga co 700 ms.
+Menu i ladowanie oraz wybor trybu klasycznego lub nieskonczonego.
+Po wyborze wyswietlane sa zasady danego trybu. Klasy trybow korzystaja
+z dziedziczenia oraz metod wirtualnych wywolywanych przez referencje do bazy.
 
 ## Kompilacja i uruchomienie
 
 Potrzebny jest C++17. Polecenia wykonuj w folderze tego etapu.
 
 ```sh
-g++ -std=c++17 -Wall -Wextra -Wpedantic -Iinclude src/main.cpp src/Gra.cpp -o saper
+g++ -std=c++17 -Wall -Wextra -Wpedantic -Iinclude src/main.cpp src/Gra.cpp src/TrybGry.cpp -o saper
 ./saper
 ```
 

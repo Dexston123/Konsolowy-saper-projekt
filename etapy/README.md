@@ -8,6 +8,7 @@ Foldery powstaly przez podzial istniejacej aplikacji na kolejne dzialajace
 zakresy. Najnowsza wersja znajduje sie tez w glownym katalogu repozytorium.
 
 - [Menu i ładowanie](01_menu_i_ladowanie/README.md): Menu, zasady gry, sprawdzanie wejscia i siedmiosekundowe ladowanie z miganiem napisu.
+- [Tryb gry](02_tryb_gry/README.md): Wybor trybu klasycznego lub nieskonczonego oraz wyswietlanie zasad z uzyciem polimorfizmu.
 
 ## Uruchomienie wybranego etapu
 

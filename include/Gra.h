@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "TrybGry.h"
+
 class Gra {
 private:
     bool koloryDostepne = false;
@@ -13,6 +15,8 @@ private:
     int wybor(int od, int doIlu) const;
     void pauza() const;
     void oGrze() const;
+    void menuGraj();
+    void pokazTryb(const TrybGry& tryb) const;
 
 public:
     Gra();
