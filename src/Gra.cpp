@@ -1,11 +1,12 @@
 #include "Gra.h"
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <thread>
-
-#include <filesystem>
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -14,7 +15,7 @@
 #include <unistd.h>
 #endif
 
-Gra::Gra() {
+Gra::Gra() : generator(std::random_device{}()) {
 #ifdef _WIN32
     HANDLE konsola = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD tryb = 0;
@@ -24,6 +25,76 @@ Gra::Gra() {
     koloryDostepne = isatty(STDOUT_FILENO);
 #endif
     wczytajDane();
+}
+
+void Gra::wczytajDane() {
+    try {
+        ustawienia.wczytaj("dane/ustawienia.txt");
+    } catch (const std::exception& blad) {
+        komunikaty.push_back(std::string(blad.what()) + " Uzyto ustawien domyslnych.");
+    }
+    try {
+        ostatniaPlansza.wczytaj("dane/ostatnia_plansza.txt");
+    } catch (const std::exception& blad) {
+        komunikaty.push_back(std::string(blad.what()) + " Pominieto zapis planszy.");
+    }
+    if (std::filesystem::exists("dane/statystyki.txt")) {
+        std::ifstream plik("dane/statystyki.txt");
+        int k, n;
+        std::string nadmiar;
+        if ((plik >> k >> n) && k >= 0 && n >= 0 && !(plik >> nadmiar)) {
+            klasyczne = k;
+            nieskonczone = n;
+        } else {
+            komunikaty.push_back("Nie mozna odczytac statystyk. Liczniki zaczynaja od zera.");
+        }
+    }
+    if (std::filesystem::exists("dane/wyniki.txt")) {
+        std::ifstream plik("dane/wyniki.txt");
+        if (!plik) komunikaty.push_back("Nie mozna odczytac tablicy wynikow.");
+        std::string linia;
+        while (std::getline(plik, linia)) {
+            if (!linia.empty()) wyniki.push_back(linia);
+        }
+    }
+}
+
+bool Gra::zapiszDane() const {
+    try {
+        std::filesystem::create_directories("dane");
+    } catch (const std::exception& blad) {
+        std::cerr << "Nie mozna utworzyc folderu danych: " << blad.what() << '\n';
+        return false;
+    }
+    bool poprawnie = true;
+    // Blad jednego pliku nie powinien zatrzymac zapisu pozostalych.
+    try {
+        ustawienia.zapisz("dane/ustawienia.txt");
+    } catch (const std::exception& blad) {
+        std::cerr << blad.what() << '\n';
+        poprawnie = false;
+    }
+    try {
+        if (!ostatniaPlansza.czyPusta()) ostatniaPlansza.zapisz("dane/ostatnia_plansza.txt");
+    } catch (const std::exception& blad) {
+        std::cerr << blad.what() << '\n';
+        poprawnie = false;
+    }
+    std::ofstream statystyki("dane/statystyki.txt");
+    statystyki << klasyczne << ' ' << nieskonczone << '\n';
+    statystyki.close();
+    if (!statystyki) {
+        std::cerr << "Nie udalo sie zapisac statystyk.\n";
+        poprawnie = false;
+    }
+    std::ofstream tabela("dane/wyniki.txt");
+    for (const std::string& wynik : wyniki) tabela << wynik << '\n';
+    tabela.close();
+    if (!tabela) {
+        std::cerr << "Nie udalo sie zapisac wynikow.\n";
+        poprawnie = false;
+    }
+    return poprawnie;
 }
 
 std::string Gra::kodKoloru() const {
@@ -119,32 +190,15 @@ void Gra::pauza() const {
     std::getline(std::cin, linia);
 }
 
-void Gra::oGrze() const {
-    naglowek("O GRZE");
-    std::cout << "  Celem Sapera jest odkrycie wszystkich pol bez min.\n"
-                 "  Cyfra na polu oznacza liczbe min w jego sasiedztwie.\n"
-                 "  Mina moze znajdowac sie rowniez po przekatnej.\n\n"
-                 "  Menu obslugujesz numerami i klawiszem Enter.\n";
+void Gra::tablicaWynikow() const {
+    naglowek("TABLICA WYNIKOW");
+    if (wyniki.empty()) {
+        std::cout << "  Brak zapisanych wynikow.\n";
+    } else {
+        std::cout << "  Gracz / punkty / tryb\n\n";
+        for (const std::string& wynik : wyniki) std::cout << "  " << wynik << '\n';
+    }
     pauza();
-}
-
-void Gra::wczytajDane() {
-    try {
-        ustawienia.wczytaj("dane/ustawienia.txt");
-    } catch (const std::exception& blad) {
-        komunikaty.push_back(std::string(blad.what()) + " Uzyto ustawien domyslnych.");
-    }
-}
-
-bool Gra::zapiszDane() const {
-    try {
-        std::filesystem::create_directories("dane");
-        ustawienia.zapisz("dane/ustawienia.txt");
-        return true;
-    } catch (const std::exception& blad) {
-        std::cerr << blad.what() << '\n';
-        return false;
-    }
 }
 
 void Gra::menuUstawien() {
@@ -181,6 +235,33 @@ void Gra::menuUstawien() {
     }
 }
 
+void Gra::podglad(TrybGry& tryb, bool klasyczny) {
+    while (std::cin) {
+        tryb.przygotuj(generator);
+        ostatniaPlansza = tryb.getPlansza();
+        if (klasyczny) ++klasyczne;
+        else ++nieskonczone;
+
+        const Plansza& plansza = tryb.getPlansza();
+        wyczyscEkran();
+        zastosujKolor();
+        std::cout << "  SAPER / " << tryb.nazwa() << '\n'
+                  << "  " << std::string(50, '-') << '\n'
+                  << "  " << tryb.opis() << '\n'
+                  << "  " << ustawienia.nazwaTrudnosci() << " | "
+                  << plansza.getWiersze() << " x " << plansza.getKolumny()
+                  << " | Miny: " << plansza.getMiny() << '\n'
+                  << "  Plansza: " << tryb.getNumerPlanszy() << "\n\n";
+        if (koloryDostepne && ustawienia.getKolor() != 0)
+            plansza.wypisz(std::cout, kodKoloru());
+        else
+            std::cout << plansza;
+        std::cout << "  * = mina   . = puste pole   1-8 = miny w sasiedztwie\n"
+                     "  [1] Nowa plansza   [0] Powrot do wyboru trybu\n";
+        if (wybor(0, 1) != 1) return;
+    }
+}
+
 int Gra::wybierzTrudnosc(const std::string& tytul) const {
     naglowek(tytul);
     for (int poziom = 1; poziom <= 5; ++poziom) {
@@ -195,33 +276,24 @@ int Gra::wybierzTrudnosc(const std::string& tytul) const {
     return wybor(0, 5);
 }
 
-void Gra::pokazTryb(const TrybGry& tryb) const {
-    naglowek(tryb.nazwa());
-    std::cout << "  " << tryb.opis() << '\n';
-    std::cout << "  " << ustawienia.nazwaTrudnosci() << " | "
-              << ustawienia.bokPlanszy() << " x " << ustawienia.bokPlanszy()
-              << " | Miny: " << ustawienia.liczbaMin() << '\n';
-    pauza();
-}
-
 void Gra::menuGraj() {
     while (std::cin) {
         naglowek("WYBIERZ TRYB");
         std::cout << "  [1] Klasyczny    - jedna gra na punkty\n"
-                     "  [2] Nieskonczony - kolejne plansze do przegranej\n"
+                     "  [2] Nieskonczony - grasz, az trafisz na mine\n"
                      "  [0] Powrot\n";
         int opcja = wybor(0, 2);
         if (opcja <= 0) return;
-        int poziom = wybierzTrudnosc("POZIOM TRUDNOSCI");
-        if (poziom == -1) return;
-        if (poziom == 0) continue;
-        ustawienia.setTrudnosc(poziom);
+        int trudnosc = wybierzTrudnosc(opcja == 1 ? "KLASYCZNY / POZIOM TRUDNOSCI" : "NIESKONCZONY / POZIOM TRUDNOSCI");
+        if (trudnosc == -1) return;
+        if (trudnosc == 0) continue;
+        ustawienia.setTrudnosc(trudnosc);
         if (opcja == 1) {
-            TrybKlasyczny tryb;
-            pokazTryb(tryb);
+            TrybKlasyczny tryb(ustawienia);
+            podglad(tryb, true);
         } else {
-            TrybNieskonczony tryb;
-            pokazTryb(tryb);
+            TrybNieskonczony tryb(ustawienia);
+            podglad(tryb, false);
         }
     }
 }
@@ -235,15 +307,16 @@ int Gra::uruchom() {
     bool dziala = true;
     while (dziala && std::cin) {
         naglowek("MENU GLOWNE");
-        std::cout << "  [1] Tryby gry\n\n  [2] Ustawienia\n\n  [3] O grze\n\n  [4] Wyjdz\n";
-        int opcja = wybor(1, 4);
-        if (opcja == 1) menuGraj();
-        else if (opcja == 2) menuUstawien();
-        else if (opcja == 3) oGrze();
-        else dziala = false;
+        std::cout << "  [1] Graj\n\n  [2] Tablica Wynikow\n\n  [3] Ustawienia\n\n  [4] Wyjdz\n";
+        switch (wybor(1, 4)) {
+            case 1: menuGraj(); break;
+            case 2: tablicaWynikow(); break;
+            case 3: menuUstawien(); break;
+            default: dziala = false;
+        }
     }
     bool zapisano = zapiszDane();
-    std::cout << (zapisano ? "\n  Dane zapisane. Do zobaczenia!\n" : "\n  Blad zapisu ustawien.\n");
+    std::cout << (zapisano ? "\n  Dane zapisane. Do zobaczenia!\n" : "\n  Nie wszystkie dane zostaly zapisane.\n");
     if (koloryDostepne) std::cout << "\033[0m" << std::flush;
     return zapisano ? 0 : 1;
 }
