@@ -9,6 +9,7 @@ zakresy. Najnowsza wersja znajduje sie tez w glownym katalogu repozytorium.
 
 - [Menu i ładowanie](01_menu_i_ladowanie/README.md): Menu, zasady gry, sprawdzanie wejscia i siedmiosekundowe ladowanie z miganiem napisu.
 - [Tryb gry](02_tryb_gry/README.md): Wybor trybu klasycznego lub nieskonczonego oraz wyswietlanie zasad z uzyciem polimorfizmu.
+- [Ustawienia](03_ustawienia/README.md): Motywy kolorystyczne, piec poziomow trudnosci, animacja i zapis ustawien do TXT.
 
 ## Uruchomienie wybranego etapu
 

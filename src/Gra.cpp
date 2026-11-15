@@ -5,6 +5,8 @@
 #include <sstream>
 #include <thread>
 
+#include <filesystem>
+
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
@@ -21,10 +23,13 @@ Gra::Gra() {
 #else
     koloryDostepne = isatty(STDOUT_FILENO);
 #endif
+    wczytajDane();
 }
 
 std::string Gra::kodKoloru() const {
-    return koloryDostepne ? "\033[0;92m" : "";
+    if (!koloryDostepne) return "";
+    const char* kolory[] = {"\033[0m", "\033[0;92m", "\033[0;96m", "\033[0;93m"};
+    return kolory[ustawienia.getKolor()];
 }
 
 void Gra::zastosujKolor() const {
@@ -123,9 +128,79 @@ void Gra::oGrze() const {
     pauza();
 }
 
+void Gra::wczytajDane() {
+    try {
+        ustawienia.wczytaj("dane/ustawienia.txt");
+    } catch (const std::exception& blad) {
+        komunikaty.push_back(std::string(blad.what()) + " Uzyto ustawien domyslnych.");
+    }
+}
+
+bool Gra::zapiszDane() const {
+    try {
+        std::filesystem::create_directories("dane");
+        ustawienia.zapisz("dane/ustawienia.txt");
+        return true;
+    } catch (const std::exception& blad) {
+        std::cerr << blad.what() << '\n';
+        return false;
+    }
+}
+
+void Gra::menuUstawien() {
+    while (std::cin) {
+        naglowek("USTAWIENIA");
+        std::cout << "  [1] Kolorystyka: " << ustawienia.nazwaKoloru() << '\n'
+                  << "  [2] Domyslny poziom: " << ustawienia.nazwaTrudnosci() << ", "
+                  << ustawienia.bokPlanszy() << " x "
+                  << ustawienia.bokPlanszy() << ", miny: " << ustawienia.liczbaMin() << '\n'
+                  << "  [3] Animacja ladowania: " << (ustawienia.czyAnimacja() ? "TAK" : "NIE") << '\n'
+                  << "  [4] Przywroc ustawienia domyslne\n"
+                     "  [0] Powrot\n";
+        int opcja = wybor(0, 4);
+        if (opcja <= 0) return;
+        Ustawienia poprzednie = ustawienia;
+        if (opcja == 1) {
+            naglowek("KOLORYSTYKA");
+            std::cout << "  [0] Bez kolorow\n  [1] Zielona\n  [2] Blekitna\n  [3] Bursztynowa\n";
+            int kolor = wybor(0, 3);
+            if (kolor == -1) return;
+            ustawienia.setKolor(kolor);
+        } else if (opcja == 2) {
+            int trudnosc = wybierzTrudnosc("DOMYSLNY POZIOM TRUDNOSCI");
+            if (trudnosc == -1) return;
+            if (trudnosc != 0) ustawienia.setTrudnosc(trudnosc);
+        } else if (opcja == 3) {
+            ustawienia.setAnimacja(!ustawienia.czyAnimacja());
+        } else {
+            ustawienia = Ustawienia();
+        }
+        naglowek("USTAWIENIA");
+        std::cout << (ustawienia == poprzednie ? "\n  Ustawienia bez zmian.\n" : "\n  Ustawienia zmienione. Zapis przy wyjsciu.\n");
+        pauza();
+    }
+}
+
+int Gra::wybierzTrudnosc(const std::string& tytul) const {
+    naglowek(tytul);
+    for (int poziom = 1; poziom <= 5; ++poziom) {
+        Ustawienia opcja(ustawienia.getKolor(), poziom, ustawienia.czyAnimacja());
+        std::cout << "  [" << poziom << "] " << opcja.nazwaTrudnosci() << " - "
+                  << opcja.bokPlanszy() << " x " << opcja.bokPlanszy()
+                  << ", miny: " << opcja.liczbaMin();
+        if (poziom == ustawienia.getTrudnosc()) std::cout << " (domyslny)";
+        std::cout << '\n';
+    }
+    std::cout << "  [0] Powrot\n";
+    return wybor(0, 5);
+}
+
 void Gra::pokazTryb(const TrybGry& tryb) const {
     naglowek(tryb.nazwa());
     std::cout << "  " << tryb.opis() << '\n';
+    std::cout << "  " << ustawienia.nazwaTrudnosci() << " | "
+              << ustawienia.bokPlanszy() << " x " << ustawienia.bokPlanszy()
+              << " | Miny: " << ustawienia.liczbaMin() << '\n';
     pauza();
 }
 
@@ -137,6 +212,10 @@ void Gra::menuGraj() {
                      "  [0] Powrot\n";
         int opcja = wybor(0, 2);
         if (opcja <= 0) return;
+        int poziom = wybierzTrudnosc("POZIOM TRUDNOSCI");
+        if (poziom == -1) return;
+        if (poziom == 0) continue;
+        ustawienia.setTrudnosc(poziom);
         if (opcja == 1) {
             TrybKlasyczny tryb;
             pokazTryb(tryb);
@@ -148,17 +227,23 @@ void Gra::menuGraj() {
 }
 
 int Gra::uruchom() {
-    ladowanie();
+    if (ustawienia.czyAnimacja()) ladowanie();
+    if (!komunikaty.empty()) {
+        for (const std::string& komunikat : komunikaty) std::cout << "  " << komunikat << '\n';
+        pauza();
+    }
     bool dziala = true;
     while (dziala && std::cin) {
         naglowek("MENU GLOWNE");
-        std::cout << "  [1] Tryby gry\n\n  [2] O grze\n\n  [3] Wyjdz\n";
-        int opcja = wybor(1, 3);
+        std::cout << "  [1] Tryby gry\n\n  [2] Ustawienia\n\n  [3] O grze\n\n  [4] Wyjdz\n";
+        int opcja = wybor(1, 4);
         if (opcja == 1) menuGraj();
-        else if (opcja == 2) oGrze();
+        else if (opcja == 2) menuUstawien();
+        else if (opcja == 3) oGrze();
         else dziala = false;
     }
-    std::cout << "\n  Do zobaczenia!\n";
+    bool zapisano = zapiszDane();
+    std::cout << (zapisano ? "\n  Dane zapisane. Do zobaczenia!\n" : "\n  Blad zapisu ustawien.\n");
     if (koloryDostepne) std::cout << "\033[0m" << std::flush;
-    return 0;
+    return zapisano ? 0 : 1;
 }

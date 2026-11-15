@@ -4,9 +4,18 @@
 
 #include "TrybGry.h"
 
+#include "Ustawienia.h"
+#include <vector>
+
 class Gra {
 private:
     bool koloryDostepne = false;
+    Ustawienia ustawienia;
+    std::vector<std::string> komunikaty;
+    void wczytajDane();
+    bool zapiszDane() const;
+    void menuUstawien();
+    int wybierzTrudnosc(const std::string& tytul) const;
     std::string kodKoloru() const;
     void zastosujKolor() const;
     void wyczyscEkran() const;

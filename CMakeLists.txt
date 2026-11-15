@@ -9,6 +9,7 @@ add_executable(saper
     src/main.cpp
     src/Gra.cpp
     src/TrybGry.cpp
+    src/Ustawienia.cpp
 )
 target_include_directories(saper PRIVATE include)
 
