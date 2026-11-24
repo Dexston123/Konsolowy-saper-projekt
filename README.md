@@ -1,73 +1,64 @@
 # Konsolowy Saper
 
-Projekt w C++17 na podstawie instrukcji z pliku `Projekt zaliczeniowy C++.pdf`.
-Obecna wersja obejmuje menu i podglad generatora plansz. Wlasciwa rozgrywka
-bedzie kolejnym etapem.
+Gra w C++17 na podstawie instrukcji z pliku `Projekt zaliczeniowy C++.pdf`.
+Menu, ramki, komendy i komunikaty konsoli sa w ASCII.
 
-## Co juz dziala
+## Rozgrywka
 
-- Sztuczne ladowanie przez okolo 7 sekund: piec zapisanych na sztywno etapow
-  paska i migajacy napis SAPER (700 ms widoczny, 700 ms ukryty).
-  Pasek nie mierzy zadnego postepu. Miganie dziala w terminalu z obsluga ANSI.
-- Menu: Graj, Tablica Wynikow, Ustawienia, Wyjdz.
-- Dwa tryby: Klasyczny (docelowo jedna gra na punkty) oraz Nieskonczony
-  (docelowo kolejne plansze do przegranej).
-- Podglad wszystkich min i liczby min na osmiu sasiednich polach.
-- Ponowne losowanie planszy w obu trybach, bez odkrywania pol i flagowania.
-- Cztery kolorystyki, piec poziomow trudnosci, przelaczanie animacji i reset ustawien.
-- Kolorowe cyfry, bordowe miny, tlo konsoli i ramki w wybranym motywie.
-- Pelna siatka ASCII z osobna ramka kazdego pola.
-- Osobne ekrany ustawien oraz czyszczenie ekranu i historii konsoli przy przejsciach.
-- Zapis ustawien, licznikow podgladow, tablicy wynikow i ostatniej planszy do TXT.
-- Odczyt danych po kolejnym uruchomieniu oraz komunikaty o blednych plikach.
+- Klasyczny: jedna plansza, wygrana po odkryciu wszystkich pol bez min.
+- Nieskonczony: po wyczyszczeniu planszy przechodzisz do kolejnej na tym samym
+  poziomie. Punkty zostaja, a seria konczy sie po trafieniu na mine.
+- Pierwsze odkrycie jest bezpieczne. Na dostepnych poziomach rowniez sasiednie
+  pola sa wolne od min, wiec pierwsze odkrycie otwiera pusty obszar.
+- Puste obszary i otaczajace je liczby odkrywaja sie automatycznie.
+- Flagi oznaczaja podejrzane pola. Mozna je zdejmowac; ich liczba nie moze
+  przekroczyc liczby min. Do wygranej wystarczy odkrycie wszystkich bezpiecznych
+  pol, nie trzeba oznaczac kazdej miny.
+- Odkrywanie sasiadow liczby dziala po postawieniu obok odpowiedniej liczby flag.
+  Blednie postawione flagi moga wtedy spowodowac trafienie na mine.
+- Miny pozostaja ukryte do zakonczenia planszy. Na przegranej planszy widac
+  trafiona mine i zle postawione flagi.
+- Przerwana gra jest zapamietywana, lacznie z flagami, punktami, czasem i seria.
+  Z menu Graj mozna ja wznowic, rowniez po ponownym uruchomieniu programu.
+- Tablica wynikow zawiera zakonczone partie, nick, punkty, tryb, poziom,
+  liczbe ukonczonych plansz, czas oraz wynik gry. Pokazuje 10 najlepszych wpisow
+  i pozwala filtrowac tryby. Przerwanie gry przez menu nie dopisuje wyniku.
 
-Wszystkie napisy i ramki w konsoli sa w ASCII. Sterowanie odbywa sie przez
-wpisanie numeru i nacisniecie Enter. Nie ma obslugi strzalek ani myszy.
-Tablica wynikow na poczatku jest pusta: samo losowanie nie daje punktow.
+Menu glowne ma cztery opcje: Graj, Tablica Wynikow, Ustawienia, Wyjdz.
+Pozostaly cztery motywy kolorystyczne, siedmiosekundowe sztuczne ladowanie
+z migajacym logo oraz pelna siatka bez podzialu na strony. Duze plansze
+najwygodniej ogladac w powiekszonym terminalu.
 
-## Kompilacja i uruchomienie
+## Sterowanie
 
-Potrzebny jest kompilator z obsluga C++17. Nie ma dodatkowych bibliotek.
-Polecenia wykonuj w glownym folderze projektu.
+Najpierw wybierz tryb i poziom trudnosci. Numery w menu zatwierdz Enterem.
+W trakcie gry wpisuj komende i wspolrzedne oddzielone spacjami, np.:
 
-### Windows, MinGW-w64
-
-```sh
-g++ -std=c++17 -Wall -Wextra -Wpedantic -Iinclude src/main.cpp src/Ustawienia.cpp src/Plansza.cpp src/TrybGry.cpp src/Gra.cpp -o saper.exe
+```text
+o 3 5
+f 2 4
+a 3 5
 ```
 
-Uruchomienie w PowerShell:
+| Komenda | Dzialanie |
+| --- | --- |
+| `o 3 5` | Odkrycie pola w wierszu 3, kolumnie 5. |
+| `f 3 5` | Postawienie lub zdjecie flagi w wierszu 3, kolumnie 5. |
+| `a 3 5` | Odkrycie nieoznaczonych sasiadow liczby w wierszu 3, kolumnie 5. |
+| `0` | Zapisanie przerwanej gry i powrot do wyboru trybu. |
+| `?` | Zasady i pomoc, bez utraty partii. |
 
-```powershell
-.\saper.exe
-```
+Wspolrzedne zaczynaja sie od **1**. Litery komend moga byc male lub duze.
+Puste, nieprawidlowe i nadmiarowe dane sa odrzucane. Nie ma obslugi myszy
+ani strzalek; sterowanie pozostaje tekstowe.
 
-Kolory dzialaja w terminalu obslugujacym sekwencje ANSI, np. Windows Terminal.
-Program wlacza ich obsluge w konsoli Windows, jezeli jest dostepna.
-Gdy nie jest dostepna, wyswietla zwykly tekst. Przy przekierowaniu wyjscia
-do pliku kolory i czyszczenie ekranu sa wylaczone.
+Legenda: `#` zakryte, `F` flaga, `.` puste, `1`-`8` miny w sasiedztwie,
+`*` mina, `X` trafiona mina, `!` blednie oznaczone pole po przegranej.
+Kolory cyfr sa stale, miny bordowe, flagi bursztynowe. Tlo pol jest tlem konsoli.
+Po zakonczeniu planszy miny sa pokazywane jako `*`, a trafiona mina jako `X`.
+Wybrany motyw dotyczy menu i ramek. Opcja Bez kolorow wylacza tez kolory pol.
 
-### Linux / WSL
-
-```sh
-g++ -std=c++17 -Wall -Wextra -Wpedantic -Iinclude src/main.cpp src/Ustawienia.cpp src/Plansza.cpp src/TrybGry.cpp src/Gra.cpp -o saper
-./saper
-```
-
-### CMake (opcjonalnie)
-
-```sh
-cmake -S . -B build
-cmake --build build
-```
-
-Uruchom `./build/saper` na Linuxie, `.\build\saper.exe` przy MinGW
-lub `.\build\Debug\saper.exe` przy domyslnej konfiguracji Visual Studio.
-
-## Przyklad
-
-Wybierz `1` (Graj), potem `1` (Klasyczny) lub `2` (Nieskonczony), a nastepnie
-poziom trudnosci. Oba tryby korzystaja z tych samych pieciu poziomow:
+## Poziomy i punkty
 
 | Poziom | Plansza | Miny |
 | --- | --- | --- |
@@ -77,83 +68,137 @@ poziom trudnosci. Oba tryby korzystaja z tych samych pieciu poziomow:
 | 4. Trudny | 16 x 16 | 40 |
 | 5. Ekspert | 18 x 18 | 65 |
 
-Domyslny poziom to Latwy: 9 x 9. Ostatnio wybrany poziom jest zapamietywany.
-Zobaczysz plansze podobna do tej ponizej (tu tylko fragment):
+Za kazde odkryte bezpieczne pole otrzymujesz `10 * poziom` punktow, a za
+ukonczenie planszy dodatkowe `500 * poziom`. Automatycznie odkryte pola licza
+sie tak samo. Flagi, powtorne odkrycie i samo wznowienie nie daja punktow.
+Przegrana zachowuje punkty za poprawnie odkryte pola. W nieskonczonym sumowane
+sa punkty z poprzednich plansz oraz biezacej.
 
-```text
-       1   2   3
-     +---+---+---+
-  1  | . | 1 | * |
-     +---+---+---+
-  2  | 1 | 2 | 1 |
-     +---+---+---+
-  3  | * | 1 | . |
-     +---+---+---+
+Przyklad: wygrana na 6 x 6 z 5 minami daje `(36 - 5) * 10 + 500 = 810 pkt`.
+Po wygraniu dwoch takich plansz w nieskonczonym masz 1620 pkt.
+Ranking sortuje malejaco po punktach, potem po liczbie wyczyszczonych plansz,
+a nastepnie po krotszym czasie i nazwie gracza.
+
+Czas jest liczony po pierwszym odkryciu podczas oczekiwania na komendy,
+lacznie z poprawianiem blednych ruchow. Menu, ekran pomocy i oczekiwanie na
+kolejna plansze nie naliczaja czasu. Wyswietlany czas odswieza sie po komendzie.
+Nie ma premii za czas, zegar sluzy do informacji i rozstrzygania remisow.
+
+W Ustawieniach mozna zmienic nick (1-16 znakow ASCII: litery, cyfry, `_`, `-`).
+Domyslnie jest to Gracz. Przerwana partia zachowuje nick, z ktorym ja rozpoczeto.
+Zmiana domyslnego poziomu nie zmienia juz zapisanej planszy.
+
+## Kompilacja i uruchomienie
+
+Wymagany jest kompilator C++17. Nie sa potrzebne dodatkowe biblioteki.
+Polecenia wykonuj w glownym folderze projektu, nie w katalogu etapy.
+
+### Windows z MinGW-w64
+
+```cmd
+g++ -std=c++17 -Wall -Wextra -Wpedantic -Iinclude src/main.cpp src/Ustawienia.cpp src/Plansza.cpp src/TrybGry.cpp src/Gra.cpp src/Wynik.cpp -o saper.exe
+.\saper.exe
 ```
 
-`*` oznacza mine, `.` pole bez min w sasiedztwie, a cyfry liczbe pobliskich min.
-Opcja `1` pod plansza losuje kolejny uklad, `0` wraca do wyboru trybu.
-Cyfry maja stale kolory: 1 niebieski, 2 zielony, 3 czerwony, 4 niebieskofioletowy,
-5 ciemnoczerwony, 6 turkusowy, 7 jasnoszary, 8 szary. Miny sa bordowe.
-Pola zachowuja tlo konsoli. Wybor "Bez kolorow" wylacza rowniez
-kolory planszy. Motywy menu i ramek dzialaja tak jak wczesniej.
-Plansza jest zawsze wypisywana w calosci, z pelna siatka, bez podzialu na strony.
-W klasycznym kazdy podglad przedstawia nowa pojedyncza gre. W nieskonczonym
-numer podgladu rosnie w ramach wybranego trybu. To demonstracja generatora,
-a nie przechodzenie poziomow przez gracza.
+### Linux / WSL
 
-Generator `mt19937` dostaje ziarno z `random_device` raz przy uruchomieniu.
-Tasujemy wszystkie indeksy pol i bierzemy tyle pozycji na miny, ile przewiduje poziom.
-Pozycje nie powtarzaja sie w jednej planszy. Dwa niezalezne losowania moga
-teoretycznie dac ten sam uklad.
+```sh
+mkdir -p build
+g++ -std=c++17 -Wall -Wextra -Wpedantic -Iinclude src/main.cpp src/Ustawienia.cpp src/Plansza.cpp src/TrybGry.cpp src/Gra.cpp src/Wynik.cpp -o build/saper
+./build/saper
+```
 
-## Pliki danych
+Z terminala Windows, jesli plik zostal skompilowany w WSL:
 
-Folder `dane` powstaje przy wyjsciu w **biezacym katalogu roboczym**.
-Uruchamiaj program z tego samego folderu, aby uzywal tych samych zapisow.
-Dane nie sa dodawane do Gita.
+```cmd
+wsl ./build/saper
+```
+
+### CMake (opcjonalnie)
+
+```sh
+cmake -S . -B build
+cmake --build build
+```
+
+Uruchom `./build/saper` na Linuxie, `.\build\saper.exe` dla MinGW albo
+`.\build\Debug\saper.exe` dla Visual Studio.
+Kolory wymagaja terminala ANSI, np. Windows Terminal. W konsoli Windows
+program wlacza ich obsluge, jezeli jest dostepna. Przekierowanie wyjscia
+wylacza kolory i sekwencje czyszczenia.
+
+## Zapis w TXT
+
+Folder `dane` jest tworzony w **biezacym katalogu roboczym**. Uruchamiaj program
+z tego samego miejsca, aby korzystac z tych samych zapisow. Nie zmieniaj
+plikow podczas dzialania gry. Nowa gra po potwierdzeniu zastepuje poprzednia
+niedokonczona partie; tablica wynikow jest zachowywana.
+
+Dane sa zapisywane po poprawnym ruchu, przy przerwaniu i zakonczeniu gry oraz
+przy wyjsciu z aplikacji. EOF tez zapisuje stan. Zamkniecie procesu na sile
+moze utracic czas od ostatniego zapisu. Blad zapisu jest wyswietlany w konsoli,
+a przy wyjsciu program zwraca kod 1, jesli nie zapisal wszystkich plikow.
 
 | Plik | Format |
 | --- | --- |
-| `ustawienia.txt` | Pierwsza linia: `USTAWIENIA_V2`. Druga: `kolor trudnosc animacja`, np. `1 2 1`. Kolor 0-3, trudnosc 1-5, animacja 0/1. Starszy format z dwoma rozmiarami jest odczytywany i przeliczany na poziom 2 lub 4. |
-| `statystyki.txt` | Jedna linia: liczba wygenerowanych plansz klasycznych i nieskonczonych, np. `3 2`. To liczniki podgladow, nie wyniki gracza. |
-| `wyniki.txt` | Na razie pusty. Przewidziano jeden wynik na linie: `nick punkty tryb`. Istniejace linie sa odczytywane, wyswietlane i zachowywane. |
-| `ostatnia_plansza.txt` | Pierwsza linia: `wiersze kolumny miny`. Dalej wiersze planszy, bez spacji: `*` to mina, `0`-`8` liczby sasiadow. Powstaje po pierwszym losowaniu. |
+| `ustawienia.txt` | `USTAWIENIA_V2`, potem `kolor trudnosc animacja`. Kolor 0-3, poziom 1-5, animacja 0/1. Starszy format dwoch rozmiarow nadal jest odczytywany. |
+| `profil.txt` | Jedna linia z nickiem gracza. |
+| `statystyki.txt` | Dwie liczby: wygenerowane plansze klasyczne i nieskonczone. Starsze liczniki generatora sa zachowane; nie sa to liczniki zwyciestw. |
+| `wyniki.txt` | `WYNIKI_V1`, dalej po jednym rekordzie: `nick punkty tryb poziom plansze sekundy status`. Status to WYGRANA lub PRZEGRANA. Dawne trzykolumnowe wpisy sa zachowywane jako ARCHIWUM z domyslnym poziomem 1. |
+| `zapis_gry.txt` | `BRAK` albo `GRA_V1`, potem `tryb poziom numerPlanszy wygranePlansze punktyZakonczonych czasMs nick` oraz zapis planszy. Tryb 1 = klasyczny, 2 = nieskonczony. |
+| `ostatnia_plansza.txt` | Ostatnio wyswietlana plansza, w takim samym formacie jak plansza wewnatrz zapisu gry. Sam ten plik nie wznawia partii. |
 
-Ostatnia plansza jest odczytywana i zachowywana miedzy uruchomieniami.
-Wybranie trybu zawsze losuje nowa. Nie ma jeszcze wznawiania partii.
-Ustawienia i statystyki sa zapisywane po opcji Wyjdz oraz po zakonczeniu wejscia
-(EOF). Zmiany ustawien dotycza kolejnych podgladow; animacji kolejnego uruchomienia.
-Zamkniecie procesu na sile nie zapewnia zapisu.
+Zapis planszy zaczyna sie od `PLANSZA_V2`. Kolejna linia zawiera
+`wiersze kolumny miny rozpoczeta trafiona`, gdzie trafiona to indeks miny
+albo -1. Dalej sa wiersze ukladu (`*`, `0`-`8`) oraz wiersze stanow (`#`, `o`, `F`).
+Litera `o` w pliku oznacza odkryte pole. Stary zapis samego ukladu jest tez
+obslugiwany jako archiwalna, zakryta plansza.
 
-Brak plikow oznacza pierwszy start. Nieprawidlowe ustawienia i statystyki sa
-zastepowane domyslnymi, a uszkodzona plansza jest pomijana. Przy zwyklym wyjsciu
-poprawne dane zastepuja poprzedni zapis. Blad zapisu jest wypisywany w konsoli,
-a program zwraca kod 1 zamiast komunikatu o udanym zapisie.
+Brak plikow oznacza pierwszy start. Zle ustawienia dostaja wartosci domyslne,
+bledne rekordy rankingu sa pomijane z komunikatem, a niespojny zapis gry nie
+jest wznawiany. Wczytywanie sprawdza m.in. wymiary, liczbe min, liczby sasiadow,
+flagi, stan partii i zgodnosc punktow za ukonczone plansze.
 
 ## Budowa programu
 
 | Klasa | Odpowiedzialnosc |
 | --- | --- |
-| `Ustawienia` | Kolor, wielkosc planszy, animacja, sprawdzanie wartosci i zapis ustawien. |
-| `Plansza` | Losowanie min, liczenie sasiadow, podglad oraz zapis i odczyt ukladu. |
-| `TrybGry` | Abstrakcyjna baza trybow, wspolna plansza i przygotowanie losowania. |
-| `TrybKlasyczny` | Opis trybu pojedynczego i przygotowanie jednej planszy. |
-| `TrybNieskonczony` | Opis trybu ciaglego i numerowanie kolejnych podgladow. |
-| `Gra` | Menu, wejscie uzytkownika, ustawienia terminala i obsluga plikow. |
+| Ustawienia | Kolory, domyslny poziom, animacja, walidacja i zapis preferencji. |
+| Plansza | Miny, odkryte pola, flagi, zalewanie pustych obszarow, sasiedzi, stan wygranej/przegranej i rysowanie. |
+| TrybGry | Wspolna plansza, poziom, nick partii, punkty, czas i zapis sesji. |
+| TrybKlasyczny | Pojedyncza plansza, bez przechodzenia do kolejnej. |
+| TrybNieskonczony | Kolejne plansze z zachowaniem punktow i stanu serii. |
+| Wynik | Walidacja rekordu rankingu, porownywanie i format zapisu. |
+| Gra | Menu, komendy gracza, obsluga czasu, plikow i przebiegu partii. |
 
-Naglowki sa w `include`, implementacje w `src`.
-`podglad(TrybGry&)` korzysta z metod wirtualnych obiektu wybranego trybu,
-wiec dziedziczenie faktycznie dziala w programie.
-`operator<<` wypisuje plansze, a `operator==` porownuje ustawienia przed i po
-zmianie. Wyjatki obsluguja nieprawidlowe parametry, dane oraz bledy zapisu.
-Prywatne pola, gettery, settery i metody `const` sa uzywane przez menu.
+Naglowki sa w include, implementacje w src. Gra posiada aktywny tryb przez
+`unique_ptr<TrybGry>` i wywoluje jego metody wirtualne. Klasy pochodne
+przeslaniaja przygotowanie, nazwe, opis i decyzje o kolejnej planszy.
+`Plansza::operator<<` wypisuje plansze bez kolorow, `Ustawienia::operator==`
+wykrywa zmiane preferencji, `Wynik::operator<` jest uzywany do sortowania,
+a `Wynik::operator<<` zapisuje rekord. Wyjatki obsluguja bledy parametrow,
+ruchow i plikow. Prywatne pola, gettery i metody const sa uzywane w programie.
 
-Schemat wszystkich klas: [docs/klasy.md](docs/klasy.md).
+Generator mt19937 jest inicjowany raz z random_device. Tasuje liste dozwolonych
+pozycji i wybiera miny bez powtorzen. Pierwszy ruch uklada miny poza swoim
+sasiedztwem. Do odkrywania pustego obszaru sluzy kolejka zapisana w wektorze,
+dzieki czemu nie ma rekurencyjnego wywolywania dla kazdego pola.
 
-Projekt docelowo ma spelniac prog bardzo dobry. Ten etap obejmuje mechanizmy
-C++ wymagane w instrukcji, ale nie zawiera jeszcze rozgrywki i naliczania punktow.
-Kolejne zakresy aplikacji sa zapisane w czterech commitach i jako samodzielne
-wersje w folderze [etapy](etapy/README.md). Jest to podzial istniejacej aplikacji
-na dzialajace etapy. Daty i autorstwo wczesniejszej historii pozostaja bez zmian.
-Na oddanie potrzebna jest tez umiejetnosc wyjasnienia kodu.
+Schemat klas: [docs/klasy.md](docs/klasy.md).
+Historyczne, samodzielne wersje menu i generatora pozostaly w
+[etapy](etapy/README.md). Biezaca, grywalna wersja znajduje sie w folderze glownym.
+
+## Sprawdzenie logiki
+
+Testy w tests/test_logika.cpp obejmuja 500 losowan, liczby sasiadow,
+bezpieczny pierwszy ruch, flagi, puste obszary, odkrywanie sasiadow, wygrana,
+przegrana, punkty, oba tryby, zapis i wznowienie oraz ranking.
+
+```sh
+g++ -std=c++17 -Wall -Wextra -Wpedantic -Iinclude tests/test_logika.cpp src/Plansza.cpp src/TrybGry.cpp src/Ustawienia.cpp src/Wynik.cpp -o build/test_logika
+./build/test_logika
+```
+
+Na Windows uzyj koncowki `-o build/test_logika.exe` oraz `.\build\test_logika.exe`.
+Po kompilacji CMake mozna tez uruchomic `ctest --test-dir build --output-on-failure`
+(dla Visual Studio dodaj `-C Debug`). Testy nie korzystaja z katalogu danych gracza.

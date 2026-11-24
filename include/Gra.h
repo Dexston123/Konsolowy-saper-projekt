@@ -1,6 +1,8 @@
 #pragma once
 
 #include "TrybGry.h"
+#include "Wynik.h"
+#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -12,8 +14,10 @@ private:
     std::mt19937 generator;
     int klasyczne = 0;
     int nieskonczone = 0;
-    std::vector<std::string> wyniki;
+    std::string nick = "Gracz";
+    std::vector<Wynik> wyniki;
     std::vector<std::string> komunikaty;
+    std::unique_ptr<TrybGry> aktywnaGra;
     bool koloryDostepne = false;
 
     void wczytajDane();
@@ -27,8 +31,13 @@ private:
     void pauza() const;
     void menuGraj();
     int wybierzTrudnosc(const std::string& tytul) const;
-    void podglad(TrybGry& tryb, bool klasyczny);
+    void pokazPlansze(const TrybGry& tryb, const std::string& informacja = "") const;
+    void rozegraj();
+    void zakonczGre(bool wygrana);
+    void nastepnaPlansza();
+    void pomoc() const;
     void menuUstawien();
+    void zmienNick();
     void tablicaWynikow() const;
 
 public:

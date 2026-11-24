@@ -7,7 +7,7 @@ int main() {
         Gra gra;
         return gra.uruchom();
     } catch (const std::exception& blad) {
-        std::cerr << "Blad uruchomienia: " << blad.what() << '\n';
+        std::cerr << "Blad programu: " << blad.what() << '\n';
         return 1;
     }
 }
